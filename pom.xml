@@ -9,7 +9,7 @@
 		<relativePath /> 
 	</parent>
 
-	<groupId>io.github.easy4j</groupId>
+	<groupId>io.github.hiwepy</groupId>
 	<artifactId>aliyun-ons-spring-boot-starter</artifactId>
 	<description>Spring Boot Starter For Aliyun ONS</description>
 	<version>4.0.x.20251227-SNAPSHOT</version>
