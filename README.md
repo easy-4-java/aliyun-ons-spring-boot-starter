@@ -10,7 +10,7 @@
 
 ``` xml
 <dependency>
-	<groupId>com.github.hiwepy</groupId>
+	<groupId>io.github.hiwepy</groupId>
 	<artifactId>aliyun-ons-spring-boot-starter</artifactId>
 	<version>2.0.0.RELEASE</version>
 </dependency>
