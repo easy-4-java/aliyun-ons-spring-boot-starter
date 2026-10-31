@@ -1,36 +1,55 @@
 package com.aliyun.openservices.spring.boot;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.Test;
 
 import com.aliyun.openservices.ons.api.Message;
 import com.aliyun.openservices.ons.api.Producer;
+import com.aliyun.openservices.ons.api.SendCallback;
+import com.aliyun.openservices.ons.api.SendResult;
 import com.aliyun.openservices.ons.api.order.OrderProducer;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class AliyunOnsMqApplicationTests {
+class AliyunOnsMqApplicationTests {
 
-	@Autowired
-	private AliyunOnsMqTemplate onsMqTemplate;
-	@Autowired
-	private OrderProducer orderProducer;
-	@Autowired
-	private Producer producer;
-	
+    private final AliyunOnsMqTemplate template = new AliyunOnsMqTemplate(new AliyunOnsMqPoolProperties());
+
     @Test
-    public void testProducer() throws Exception {
-    	Message message = new Message();
-    	onsMqTemplate.sendAsyncMes(producer, message);
-    }
-    
-    @Test
-    public void testOrderProducer() throws Exception {
-    	Message message = new Message();
-    	onsMqTemplate.sendOrderMes(orderProducer, message, "");
+    void sendsAsyncThroughProducer() {
+        Producer producer = mock(Producer.class);
+        Message message = new Message();
+
+        assertTrue(template.sendAsyncMes(producer, message));
+        verify(producer).sendAsync(same(message), any(SendCallback.class));
     }
 
+    @Test
+    void reportsAsyncSendFailure() {
+        Producer producer = mock(Producer.class);
+        Message message = new Message();
+        doThrow(new IllegalStateException("send failed"))
+                .when(producer).sendAsync(same(message), any(SendCallback.class));
+
+        assertFalse(template.sendAsyncMes(producer, message));
+    }
+
+    @Test
+    void sendsOrderedMessageWithShardingKey() {
+        OrderProducer producer = mock(OrderProducer.class);
+        SendResult result = mock(SendResult.class);
+        Message message = new Message();
+        message.setKey("message-key");
+        when(producer.send(same(message), eq("shard-1"))).thenReturn(result);
+
+        assertTrue(template.sendOrderMes(producer, message, "shard-1"));
+        verify(producer).send(same(message), eq("shard-1"));
+    }
 }
